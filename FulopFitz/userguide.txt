@@ -1,0 +1,103 @@
+
+Guide and basic documentation for included programs.
+
+Many of the mfiles act on a Matlab matrix containing some sort of signal.
+The first thing you should do, then, is to execute a command such as
+
+[signal, Fs, bits] = wavread('yourwavfile.wav');
+
+this will read a wav file into a signal matrix, for example.
+Fs will be the sampling rate, and bits will be the bit quantization.
+
+You could also make a signal matrix using Matlab commands, but I won't document that.
+
+
+Nelsonpower.m
+
+computes the channelized instantaneous frequency power spectrum (using the Nelson cross-spectral method for frequency reassignment) and plots it, giving the option to overlay the usual fft-computed power spectrum (log magnitude).
+
+Within the code, the 'delay' parameter is the number of time indices the signal should be delayed to compute the cross-spectrum with itself; it is currently fixed to 1.
+
+arguments to function are name of the signal matrix, its sample rate, the
+low and high limits to the frequency range for plotting, in Hz.
+
+function [PS, CIF, f] = Nelsonpower(signal, Fs, low, high)
+
+The fft length is currently set to 4 times the length of the signal, so it is best utilized with rather short signals.  It is easily modified to change the fft length in the code.
+
+
+Nelsonpowerm.m
+
+The final 'm' in mfile names stands for "measurement".  This mfile is the same as Nelsonpower, with the additional feature that the frequency and intensity values of the mouse pointer location are continually displayed and updated in the upper left corner of the figure.  This facilitates quickie manual measurement of spectral points of interest.
+
+
+Nelsonspec.m
+
+Compute a reassigned spectrogram, grayscale, using the Nelson cross-spectral algorithm.
+
+function [STFTpos, CIFpos, LGDpos, f, t] = Nelsonspec(signal, Fs, window, overlap, fftn, low, high, clip)
+
+  % Arguments: signal is the signal, with sampling rate Fs;
+  % window is the analysis frame length, in sample points;
+  % overlap is the number of points the frames overlap, equaling window minus frame advance;
+  % fftn is the discrete Fourier transform analysis length, in samples;
+  % low and high are the frequency limits of the display, in Hz;
+  % clip is a negative number which specifies the number of dB down from
+  % the maximum that are to be shown---everything quieter is clipped
+
+User can modify the code lines which set the colormap, to use myjet, for instance.
+myjet is included as a slight modification to the Matlab jet colormap, for a nicer color spectrogram.
+
+Nelsonspecm.m
+
+ is a version of Nelsonspec with additional code to fire up a little figure showing frequency value under the mouse pointer, to facilitate quickie manual measurements in the spectrogram figure.
+
+
+Nelsonspecjet_both.m
+
+ is a version of Nelsonspec, jet colormap, that in addition employs Nelson's 2nd-order mixed partial derivative thresholding to potentially isolate components and/or impulses.
+
+To do this, simply edit the following line in the code:
+
+plot_these = find(STFTmag >= clip & low <= CIFpos & CIFpos <= high & t(1) <= tremap & tremap <= t(end) & (abs(CIFderiv) < 0.25 | abs(LGDderiv - 1) < 0.25));
+
+The bound on the time derivative of the channelized instantaneous frequency can be used to plot only those points affiliated to a signal component.
+The closer to zero you place the bound, the fewer points will be plotted.  Putting the bound at 0.25 is reasonable for speech.
+
+In dual fashion, the bound on the frequency derivative of the local group delay (a conceptually distinct but mathematically equivalent derivative) can be used to plot only those points affiliated to an impulsive signal event.
+The closer to 1 you place the bound, the fewer points will be plotted.
+Putting the bound within 0.25 of 1 is reasonable for speech.
+
+These tricks can be used to effectively isolate formants.  Try it.
+
+
+Nelsonspecjet_bothm.m
+
+is a version that once again kicks up a little figure to show the frequency value under the mouse pointer.  Useful for measuring directly from the figure.  Try magnifying the figure in the vicinity of points of interest, to facilitate a more accurate measurement. 
+
+
+Ancillary files
+
+hanning.m
+
+computes a Hann ('hanning', a play on Hamming using Hann's name) window; included so the Matlab signal processing toolbox is not needed.
+
+arg.m
+
+arg(X) where X is a matrix of complex numbers, computes the argument or phase angle of x but returns a value between 0 and 2pi, unlike the builtin Matlab angle function which returns the principle argument value as per standard between -pi and pi.
+
+The routine adds 2pi to negative angles returned by Matlab's 'angle' to accomplish this. The routine is needed for spectral analysis of matrices which have angular frequency encoded in complex phases; naturally the negative angular frequencies do not have the right physical interpretation.
+
+myjet.m
+
+slight modification of Matlab jet colormap, making it more suitable for spectrograms.
+
+
+References and further reading
+
+An entry point to the topic of the reassigned spectrogram is a magazine article by Sean Fulop and Kelly Fitz, in Acoustics Today July, 2006.
+
+Fulop and Fitz also published two papers on these algorithms in the Journal of the Acoustical Society of America, the first in Jan. 2006, the second in March 2007.
+
+These papers cite most of the relevant literature.
+
